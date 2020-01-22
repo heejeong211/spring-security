@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans
+                                 http://www.springframework.org/schema/beans/spring-beans.xsd
+                                 http://www.springframework.org/schema/security
+                                 http://www.springframework.org/schema/security/spring-security.xsd">
+        
+        <!-- 검사 URL -->
+        <!-- use-expressions="true"해준 이유는 access="hasRole('ADMIN')"이걸 쓰기 위해서 임 -> SpEL -->
+        <!-- access="permitAll" 모든 사람 접근 가능 -->
+        <!-- intercept-url 순서 중요!!! 접근가능한 사람들의 범위 때문. 접근 제한이 가장 적을 순 부터 위로 -->
+    <http auto-config="true" use-expressions="true">
+        <intercept-url pattern="/login/loginForm" access="permitAll" />
+        <intercept-url pattern="/" access="permitAll" />
+        <intercept-url pattern="/admin/**" access="hasRole('ADMIN')" /> <!-- 관리자만 접근 가능 -->
+        <intercept-url pattern="/**" access="hasAnyRole('USER, ADMIN')" /> <!-- 관리자 모든 접근 가능 -->
+        
+        <!-- 우리가 만든 login페이지 적용하는 부분 -->
+        <!-- login-page="/login/loginForm" 로그인 인증을 처리할 주소를 뜻한다. -->
+        <!-- default-target-url="/" 로그인이 완료되면 루트로 이동한다는 의미 -->
+        <!-- authentication-failure-url 인증 실패시 "/login/loginForm?error" 가야하는 주소 -->
+        <!--  username-parameter 로그인 폼에 아이디 입력 필드에 사용될 name 이다. 기본값은 "username" -->
+        <!-- password-parameter 로그인 폼에 비밀번호 입력 필드에 사용될 name 이다. 기본값은 "password" -->
+        <form-login login-page="/login/loginForm"
+                    default-target-url="/"
+                    authentication-failure-url="/login/loginForm?error"
+                    username-parameter="id"
+                    password-parameter="password" />
+        
+        <!-- logout이 제대로 되면 다시 홈으로 가라라는 의미 -> 알아서 session 날려버림 -->
+        <logout logout-url="/logout"
+                logout-success-url="/" />  
+        
+        <!-- access가 거부된 유저가 들어올 때 controller한테 이 주소 /login/accessDenied"를 넘겨줌 -> controller는 이 주소를 처리해야 함 -->        
+        <access-denied-handler error-page="/login/accessDenied" />
+    </http>
+    
+    <authentication-manager> 
+		<authentication-provider> 
+			<user-service> 
+				<user name="user" password="user" authorities="ROLE_USER" /> <!-- authorities 권한 -->
+				<user name="admin" password="admin" authorities="ROLE_ADMIN" />  
+			</user-service> 
+		</authentication-provider> 
+	</authentication-manager>
+    
+</beans:beans>
